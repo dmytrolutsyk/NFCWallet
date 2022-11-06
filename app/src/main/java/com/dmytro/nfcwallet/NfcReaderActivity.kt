@@ -6,22 +6,20 @@ import android.content.IntentFilter
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.NfcA
-import android.nfc.tech.NfcB
 import android.os.Bundle
 import android.util.Log
-import android.util.Log.DEBUG
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
 class NfcReaderActivity : AppCompatActivity() {
     private var nfcAdapter: NfcAdapter? = null
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.nfc_reader_activity)
         println("NFC ACTIVITY OPENED")
+
         this.nfcAdapter = NfcAdapter.getDefaultAdapter(this)?.let { it }
         var isNfcSupported: Boolean =
             this.nfcAdapter != null
@@ -40,23 +38,27 @@ class NfcReaderActivity : AppCompatActivity() {
         }
     }
 
+
     override fun onNewIntent(intent: Intent?) {
         println("NFC TEST")
         super.onNewIntent(intent)
         var tagFromIntent: Tag? = intent?.getParcelableExtra(NfcAdapter.EXTRA_TAG)
-        val nfc = NfcB.get(tagFromIntent)
+        val nfc = NfcA.get(tagFromIntent)
         nfc.connect()
         val isConnected = nfc.isConnected()
-        val GET_STRING = byteArrayOf(
+        /*val GET_STRING = byteArrayOf(
             0x80.toByte(),  //CLA Class
             0x04,  //INS Instruction
             0x00,  //P1  Parameter 1
             0x00,  //P2  Parameter 2
             0x10 //LE  maximal number of bytes expected in result
-        )
+        )*/
         println("isconencted: "+ isConnected.toString())
         if (isConnected) {
-            val receivedData: ByteArray = nfc.transceive(GET_STRING)
+            val receivedData: ByteArray = nfc.transceive(byteArrayOf(
+                0x30.toByte(),  /* CMD = READ */
+                0x10.toByte() /* PAGE = 16  */
+            ))
             val len: Int = receivedData.size
             if (!(receivedData.get(len - 2) === 0x90.toByte() && receivedData.get(len - 1) === 0x00.toByte())) throw RuntimeException(
                 "could not retrieve msisdn"
